@@ -27,6 +27,8 @@
 
 .list {
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .item {
@@ -36,10 +38,25 @@
     cursor: pointer;
     transition: background 0.2s;
     font-size: 0.95rem;
+    text-decoration: none;
+    color: inherit;
+    justify-content: space-between;
 }
 
 .item:hover {
     background: #f5f5f5;
+}
+
+.active {
+    background: #e6f4ea;
+    color: #137333;
+    font-weight: 600;
+}
+
+.projectInfo {
+    display: flex;
+    align-items: center;
+    flex: 1;
 }
 
 .dot {
@@ -47,4 +64,28 @@
     height: 10px;
     border-radius: 50%;
     margin-right: 12px;
+}
+
+.actions {
+    display: none;
+    gap: 0.5rem;
+}
+
+.item:hover .actions {
+    display: flex;
+}
+
+.actionBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #888;
+    padding: 0.2rem;
+    border-radius: 4px;
+}
+
+.actionBtn:hover {
+    background: #e0e0e0;
+    color: #333;
 }
