@@ -1,15 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useAuth } from './AuthContext';
 import api from '../../api/axios';
 
 export default function LoginBS() {
+  const navigate = useNavigate();
   const { state, dispatch } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     dispatch({ type: 'LOGIN_START' });
     try {
       const { data: users } = await api.get(`/users?email=${email}`);
@@ -18,7 +21,8 @@ export default function LoginBS() {
         return;
       }
       const { password: _, ...user } = users[0];
-      dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+      dispatch({ type: 'LOGIN_SUCCESS', payload: user  }  );
+      navigate('/dashboard', { replace: true });
     } catch {
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Erreur serveur' });
     }
