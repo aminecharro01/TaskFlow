@@ -1,101 +1,45 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../features/auth/AuthContext';
-import api from '../api/axios';
+import { memo, useCallback, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '../store';
+import { logout } from '../features/auth/authSlice';
+import useProjects, { type Project } from '../hooks/useProjects';
 import HeaderMUI from '../components/HeaderMUI';
 import Sidebar from '../components/Sidebar';
 import MainContent from '../components/MainContent';
 import ProjectForm from '../components/ProjectForm';
 import styles from './Dashboard.module.css';
-import axios from 'axios';
 
-interface Project { id: string; name: string; color: string; }
-interface Column { id: string; title: string; tasks: string[]; }
+const MemoizedSidebar = memo(Sidebar);
 
 export default function Dashboard() {
-    const { state: authState, dispatch } = useAuth();
+    const dispatch = useDispatch<AppDispatch>();
+    const userName = useSelector((s: RootState) => s.auth.user?.name);
+    const {
+        projects,
+        columns,
+        loading,
+        error,
+        addProject,
+        renameProject,
+        deleteProject,
+    } = useProjects();
+
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [columns, setColumns] = useState<Column[]>([]);
-    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
 
-    // GET
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const [projRes, colRes] = await Promise.all([
-                    api.get('/projects'),
-                    api.get('/columns'),
-                ]);
-                setProjects(projRes.data);
-                setColumns(colRes.data);
-            } catch (e) { console.error(e); }
-            finally { setLoading(false); }
-        }
-        fetchData();
-    }, []);
+    const handleRename = useCallback(
+        (project: Project) => {
+            void renameProject(project);
+        },
+        [renameProject]
+    );
 
-    // POST (with error handling)
-    async function addProject(name: string, color: string) {
-        setSaving(true);
-        setError(null);
-        try {
-            const { data } = await api.post('/projects', { name, color });
-            setProjects(prev => [...prev, data]);
-            setShowForm(false);
-        } catch (err) {
-            if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || `Erreur ${err.response?.status}`);
-            } else {
-                setError('Erreur inconnue');
-            }
-        } finally {
-            setSaving(false);
-        }
-    }
-
-    // PUT - renommer un projet
-    async function renameProject(project: Project) {
-        const newName = prompt('Nouveau nom :', project.name);
-        if (!newName || newName.trim() === '' || newName === project.name) return;
-
-        setSaving(true);
-        setError(null);
-        try {
-            const { data } = await api.put('/projects/' + project.id, { ...project, name: newName });
-            setProjects(prev => prev.map(p => p.id === project.id ? data : p));
-        } catch (err) {
-            if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || `Erreur ${err.response?.status}`);
-            } else {
-                setError('Erreur inconnue');
-            }
-        } finally {
-            setSaving(false);
-        }
-    }
-
-    // DELETE - supprimer un projet
-    async function deleteProject(id: string) {
-        if (!confirm('Êtes-vous sûr ?')) return;
-
-        setSaving(true);
-        setError(null);
-        try {
-            await api.delete('/projects/' + id);
-            setProjects(prev => prev.filter(p => p.id !== id));
-        } catch (err) {
-            if (axios.isAxiosError(err)) {
-                setError(err.response?.data?.message || `Erreur ${err.response?.status}`);
-            } else {
-                setError('Erreur inconnue');
-            }
-        } finally {
-            setSaving(false);
-        }
-    }
+    const handleDelete = useCallback(
+        (id: string) => {
+            void deleteProject(id);
+        },
+        [deleteProject]
+    );
 
     if (loading) return <div className={styles.loading}>Chargement...</div>;
 
@@ -103,16 +47,16 @@ export default function Dashboard() {
         <div className={styles.layout}>
             <HeaderMUI
                 title="TaskFlow"
-                onMenuClick={() => setSidebarOpen(p => !p)}
-                userName={authState.user?.name}
-                onLogout={() => dispatch({ type: 'LOGOUT' })}
+                onMenuClick={() => setSidebarOpen((p) => !p)}
+                userName={userName}
+                onLogout={() => dispatch(logout())}
             />
             <div className={styles.body}>
-                <Sidebar
+                <MemoizedSidebar
                     projects={projects}
                     isOpen={sidebarOpen}
-                    onRename={renameProject}
-                    onDelete={deleteProject}
+                    onRename={handleRename}
+                    onDelete={handleDelete}
                 />
                 <div className={styles.content}>
                     <div className={styles.toolbar}>
@@ -121,13 +65,12 @@ export default function Dashboard() {
                             <button
                                 className={styles.addBtn}
                                 onClick={() => setShowForm(true)}
-                                disabled={saving}
                             >
                                 + Nouveau projet
                             </button>
                         ) : (
                             <ProjectForm
-                                submitLabel={saving ? "Création..." : "Créer"}
+                                submitLabel="Créer"
                                 onSubmit={addProject}
                                 onCancel={() => setShowForm(false)}
                             />

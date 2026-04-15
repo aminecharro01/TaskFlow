@@ -17,7 +17,7 @@ export default function ProjectForm({
     const [color, setColor] = useState(initialColor);
 
     function handleSubmit(e: React.FormEvent) {
-        e.preventDefault(); // BUG FIXED
+        e.preventDefault();
         onSubmit(name, color);
     }
 
