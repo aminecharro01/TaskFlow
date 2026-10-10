@@ -1,5 +1,7 @@
 # Réponses du TP Séance 3
 
+🔗 Portfolio: https://www.aminecharro.me
+
 ### ➤ Q1 : Pourquoi `<Navigate />` (composant) et pas `navigate()` (hook) ici ?
 Parce que `ProtectedRoute` est un composant rendu lors de la phase de rendu ("render phase") de React. Il est interdit d'appeler un hook provoquant un effet de bord, tel que `navigate()`, directement dans le corps d'un composant durant cette phase. Le composant `<Navigate />` gère au contraire cette redirection à l'intérieur d'un effet (`useEffect`), de manière déclarative et sécurisée vis-à-vis du cycle de vie de React.
 
